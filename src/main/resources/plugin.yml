@@ -1,0 +1,12 @@
+name: Vouchers
+authors: [GavvyDizzle]
+version: '${project.version}'
+main: com.github.gavvydizzle.vouchers.Vouchers
+api-version: 1.19
+depend: [RewardsInventory, ServerUtils]
+commands:
+  voucher:
+    aliases: [vouchers]
+    description: Vouchers Admin Commands
+    permission: vouchers.admin
+    permission-message: Insufficient permission
