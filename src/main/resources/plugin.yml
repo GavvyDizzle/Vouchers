@@ -3,7 +3,8 @@ authors: [GavvyDizzle]
 version: '${project.version}'
 main: com.github.gavvydizzle.vouchers.Vouchers
 api-version: 1.19
-depend: [RewardsInventory, ServerUtils]
+depend: [ServerUtils]
+softdepend: [RewardsInventory]
 commands:
   voucher:
     aliases: [vouchers]

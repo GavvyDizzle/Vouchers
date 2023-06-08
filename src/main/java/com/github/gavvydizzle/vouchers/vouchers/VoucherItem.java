@@ -6,7 +6,6 @@ import com.github.mittenmc.serverutils.ConfigUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
@@ -14,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,24 +21,24 @@ import java.util.Objects;
 
 public class VoucherItem implements Comparable<VoucherItem> {
 
-    private final String id, permission, onClaimMessage;
+    private final String id, itemName, permission, onClaimMessage;
     private final ItemStack item, itemListItem;
     private final List<String> extraCommands;
 
-    public VoucherItem(String id,
-                       String permission,
-                       String displayName,
-                       String material,
-                       List<String> lore,
-                       List<String> extraCommands,
-                       String onClaimMessage,
+    public VoucherItem(@NotNull String id,
+                       @Nullable String permission,
+                       @Nullable String displayName,
+                       @Nullable String material,
+                       @NotNull List<String> lore,
+                       @NotNull List<String> extraCommands,
+                       @Nullable String onClaimMessage,
                        boolean isEnchanted,
                        int customModelID) {
 
         this.id = id;
         this.permission = permission;
         this.extraCommands = extraCommands;
-        this.onClaimMessage = Colors.conv(onClaimMessage);
+        this.onClaimMessage = Colors.conv(onClaimMessage == null ? "" : onClaimMessage.trim());
 
         item = new ItemStack(ConfigUtils.getMaterial(material, Material.NAME_TAG));
         ItemMeta meta = item.getItemMeta();
@@ -49,7 +49,8 @@ public class VoucherItem implements Comparable<VoucherItem> {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }
 
-        meta.setDisplayName(Colors.conv(displayName));
+        itemName = Colors.conv(displayName);
+        meta.setDisplayName(itemName);
         meta.setLore(Colors.conv(lore));
         meta.getPersistentDataContainer().set(Vouchers.getInstance().getVoucherManager().getVoucherKey(), PersistentDataType.STRING, id);
         if (customModelID > 0) meta.setCustomModelData(customModelID);
@@ -67,17 +68,15 @@ public class VoucherItem implements Comparable<VoucherItem> {
     }
 
     /**
-     * Runs all commands for this voucher while replacing %player% with the player's name
+     * Runs the voucher-specific commands and sends the claim message
      * @param player The player
      */
-    public void runExtraCommands(OfflinePlayer player) {
+    public void claim(Player player) {
         for (String cmd : extraCommands) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", Objects.requireNonNull(player.getName())));
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("{player}", Objects.requireNonNull(player.getName())));
         }
-    }
 
-    public void sendOnClaimMessage(Player player) {
-        if (!onClaimMessage.trim().isEmpty()) {
+        if (!onClaimMessage.isEmpty()) {
             player.sendMessage(onClaimMessage);
         }
     }
@@ -89,6 +88,10 @@ public class VoucherItem implements Comparable<VoucherItem> {
 
     public String getId() {
         return id;
+    }
+
+    public String getItemName() {
+        return itemName;
     }
 
     public String getPermission() {

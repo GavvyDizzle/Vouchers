@@ -29,7 +29,7 @@ public class AddToRewardsMenuCommand extends SubCommand {
 
         setName("reward");
         setDescription("Adds a voucher to the player's /rew pages inventory");
-        setSyntax("/" + adminCommandManager.getCommandDisplayName() + " reward <player> <itemID> <menuID> [amount]");
+        setSyntax("/" + adminCommandManager.getCommandDisplayName() + " reward <player> <id> <menuID> [amount]");
         setColoredSyntax(ChatColor.YELLOW + getSyntax());
         setPermission(adminCommandManager.getPermissionPrefix() + getName().toLowerCase());
     }

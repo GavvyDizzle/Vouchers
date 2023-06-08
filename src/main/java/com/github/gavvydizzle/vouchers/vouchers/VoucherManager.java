@@ -24,11 +24,11 @@ public class VoucherManager implements Listener  {
     private final Vouchers instance;
     private final File vouchersFolder;
     private final NamespacedKey voucherKey;
-    private final HashMap<UUID, ItemStack> confirmations;
+    private final HashMap<UUID, String> confirmations;
     private final Map<String, VoucherItem> vouchers;
     private final ArrayList<VoucherItem> voucherList;
 
-    private String onBlockClickMessage, confirmationMessage, ownedMessage;
+    private String confirmationMessage, ownedMessage;
     private int confirmationDelayTicks;
     private boolean checkForPermission, sortVouchersAlphabetically;
     private List<String> claimCommands;
@@ -48,18 +48,16 @@ public class VoucherManager implements Listener  {
         FileConfiguration config = instance.getConfig();
         config.options().copyDefaults(true);
         config.addDefault("confirmationDelaySeconds", 5);
-        config.addDefault("messages.rightClickBlock", "&cVouchers can't be used on blocks! Right click your voucher in the air to redeem.");
         config.addDefault("messages.hasPermission", "&cYou already have access to this cosmetic!");
-        config.addDefault("messages.confirmation", "&6&l(!) &6Are you sure you want to redeem this item? Click again to apply.");
+        config.addDefault("messages.confirmation", "&6&l(!) &6Click again to claim {voucher}");
         config.addDefault("checkForPermission", true);
         config.addDefault("sortVouchersAlphabetically", false);
-        config.addDefault("onClaimCommands", Collections.singletonList("lp user %player% permission set %permission%"));
+        config.addDefault("onClaimCommands", Collections.singletonList("lp user {player} permission set {permission}"));
         instance.saveConfig();
 
         confirmationDelayTicks = config.getInt("confirmationDelaySeconds") * 20;
-        onBlockClickMessage = Colors.conv(config.getString("messages.rightClickBlock"));
-        confirmationMessage = Colors.conv(config.getString("messages.confirmation"));
-        ownedMessage = Colors.conv(config.getString("messages.hasPermission"));
+        confirmationMessage = Colors.conv(config.getString("messages.confirmation")).trim();
+        ownedMessage = Colors.conv(config.getString("messages.hasPermission")).trim();
         checkForPermission = config.getBoolean("checkForPermission");
         sortVouchersAlphabetically = config.getBoolean("sortVouchersAlphabetically");
         claimCommands = config.getStringList("onClaimCommands");
@@ -144,17 +142,10 @@ public class VoucherManager implements Listener  {
     public void onClick(PlayerInteractEvent e) {
         if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) && e.getHand() == EquipmentSlot.HAND) {
             Player player = e.getPlayer();
-
             ItemStack voucher = player.getInventory().getItemInMainHand();
 
             if (!isVoucher(voucher)) return;
-
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                if (!onBlockClickMessage.trim().isEmpty()) {
-                    player.sendMessage(onBlockClickMessage);
-                    return;
-                }
-            }
+            e.setCancelled(true);
 
             VoucherItem voucherItem = getVoucherItem(voucher);
             if (voucherItem == null) return;
@@ -163,17 +154,17 @@ public class VoucherManager implements Listener  {
             boolean isAdmin = player.hasPermission("vouchers.admin");
 
             if (checkForPermission && voucherItem.hasPermission(player) && !isAdmin) {
-                if (!ownedMessage.trim().isEmpty()) {
+                if (!ownedMessage.isEmpty()) {
                     player.sendMessage(ownedMessage);
                 }
                 return;
             }
 
             if (!confirmations.containsKey(player.getUniqueId())) {
-                if (!confirmationMessage.trim().isEmpty()) {
-                    player.sendMessage(confirmationMessage);
+                if (!confirmationMessage.isEmpty()) {
+                    player.sendMessage(confirmationMessage.replace("{voucher}", voucherItem.getItemName()));
                 }
-                confirmations.put(player.getUniqueId(), voucher);
+                confirmations.put(player.getUniqueId(), voucherItem.getId());
 
                 Bukkit.getScheduler().scheduleSyncDelayedTask(instance, () ->
                         confirmations.remove(player.getUniqueId()), confirmationDelayTicks);
@@ -181,21 +172,27 @@ public class VoucherManager implements Listener  {
                 return;
             }
 
-            if (!player.getInventory().getItemInMainHand().isSimilar(confirmations.get(player.getUniqueId()))) {
-                confirmations.remove(player.getUniqueId());
+            if (!confirmations.get(player.getUniqueId()).equals(voucherItem.getId())) {
+                if (!confirmationMessage.isEmpty()) {
+                    player.sendMessage(confirmationMessage.replace("{voucher}", voucherItem.getItemName()));
+                }
+                confirmations.put(player.getUniqueId(), voucherItem.getId());
                 return;
             }
 
             confirmations.remove(player.getUniqueId());
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
-            for (String cmd : claimCommands) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", player.getName())
-                        .replace("%permission%", voucherItem.getPermission()));
+            // Claim commands specified in config.yml
+            if (!voucherItem.getPermission().isEmpty()) {
+                for (String cmd : claimCommands) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("{player}", player.getName())
+                            .replace("{permission}", voucherItem.getPermission()));
+                }
             }
 
-            voucherItem.runExtraCommands(player);
-            voucherItem.sendOnClaimMessage(player);
+            // Run other commands and obtain message
+            voucherItem.claim(player);
         }
     }
 

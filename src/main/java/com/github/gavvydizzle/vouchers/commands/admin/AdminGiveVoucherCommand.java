@@ -24,7 +24,7 @@ public class AdminGiveVoucherCommand extends SubCommand {
 
         setName("give");
         setDescription("Adds the voucher to the player's inventory");
-        setSyntax("/" + adminCommandManager.getCommandDisplayName() + " give <player> <voucher> [amount]");
+        setSyntax("/" + adminCommandManager.getCommandDisplayName() + " give <player> <id> [amount]");
         setColoredSyntax(ChatColor.YELLOW + getSyntax());
         setPermission(adminCommandManager.getPermissionPrefix() + getName().toLowerCase());
     }
