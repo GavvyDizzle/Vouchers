@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -138,9 +139,13 @@ public class VoucherManager implements Listener  {
         }
     }
 
-    @EventHandler
+    @EventHandler()
     public void onClick(PlayerInteractEvent e) {
-        if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) && e.getHand() == EquipmentSlot.HAND) {
+        // Allow if:
+        // 1. The player right-clicked a block and was not denied from using their item
+        //    OR The player right-clicked the air
+        // 2. The targeted hand is the main hand (to remove double clicks of main hand and offhand)
+        if (( (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.useItemInHand() != Event.Result.DENY) || e.getAction() == Action.RIGHT_CLICK_AIR) && e.getHand() == EquipmentSlot.HAND) {
             Player player = e.getPlayer();
             ItemStack voucher = player.getInventory().getItemInMainHand();
 
