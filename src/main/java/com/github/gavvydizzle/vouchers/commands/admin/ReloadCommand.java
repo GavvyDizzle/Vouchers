@@ -2,24 +2,20 @@ package com.github.gavvydizzle.vouchers.commands.admin;
 
 import com.github.gavvydizzle.vouchers.Vouchers;
 import com.github.gavvydizzle.vouchers.commands.AdminCommandManager;
-import com.github.gavvydizzle.vouchers.configs.CommandsConfig;
-import com.github.gavvydizzle.vouchers.gui.GUIManager;
-import com.github.gavvydizzle.vouchers.vouchers.VoucherManager;
 import com.github.mittenmc.serverutils.SubCommand;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
-public class AdminReloadCommand extends SubCommand {
+public class ReloadCommand extends SubCommand {
 
-    private final AdminCommandManager adminCommandManager;
-    private final VoucherManager voucherManager;
+    private final Vouchers instance;
 
-    public AdminReloadCommand(AdminCommandManager adminCommandManager, VoucherManager voucherManager) {
-        this.adminCommandManager = adminCommandManager;
-        this.voucherManager = voucherManager;
+    public ReloadCommand(AdminCommandManager adminCommandManager, Vouchers instance) {
+        this.instance = instance;
 
         setName("reload");
         setDescription("Reload this plugin");
@@ -51,14 +47,13 @@ public class AdminReloadCommand extends SubCommand {
     @Override
     public void perform(CommandSender sender, String[] args) {
         try {
-            Vouchers.getInstance().reloadConfig();
-            voucherManager.reload();
-
-            CommandsConfig.reload();
-            adminCommandManager.reload();
+            instance.reloadConfig();
+            instance.getRarityManager().reload();
+            instance.getVoucherManager().reload();
+            instance.saveConfig();
         } catch (Exception e) {
             sender.sendMessage(ChatColor.RED + "[Vouchers] Encountered an error when reloading. Check the console");
-            e.printStackTrace();
+            instance.getLogger().log(Level.SEVERE, "Plugin reload failed", e);
             return;
         }
 
@@ -67,7 +62,7 @@ public class AdminReloadCommand extends SubCommand {
 
     @Override
     public List<String> getSubcommandArguments(CommandSender sender, String[] args) {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
 }

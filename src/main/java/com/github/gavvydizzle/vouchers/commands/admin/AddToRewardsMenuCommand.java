@@ -43,6 +43,7 @@ public class AddToRewardsMenuCommand extends SubCommand {
 
         OfflinePlayer offlinePlayer = Bukkit.getPlayer(args[1]);
         if (offlinePlayer == null) {
+            //noinspection deprecation
             offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
             if (!offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
                 sender.sendMessage(ChatColor.RED + args[1] + " is not a valid player.");

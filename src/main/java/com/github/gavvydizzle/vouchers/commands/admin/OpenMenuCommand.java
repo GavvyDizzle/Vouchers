@@ -1,24 +1,24 @@
 package com.github.gavvydizzle.vouchers.commands.admin;
 
 import com.github.gavvydizzle.vouchers.commands.AdminCommandManager;
-import com.github.gavvydizzle.vouchers.gui.GUIManager;
+import com.github.gavvydizzle.vouchers.gui.InventoryManager;
 import com.github.mittenmc.serverutils.SubCommand;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class AdminListCommand extends SubCommand {
+public class OpenMenuCommand extends SubCommand {
 
-    private final GUIManager guiManager;
+    private final InventoryManager inventoryManager;
 
-    public AdminListCommand(AdminCommandManager adminCommandManager, GUIManager guiManager) {
-        this.guiManager = guiManager;
+    public OpenMenuCommand(AdminCommandManager adminCommandManager, InventoryManager inventoryManager) {
+        this.inventoryManager = inventoryManager;
 
         setName("list");
-        setDescription("Opens the vouchers list menu");
+        setDescription("Opens the vouchers menu");
         setSyntax("/" + adminCommandManager.getCommandDisplayName() + " list");
         setColoredSyntax(ChatColor.YELLOW + getSyntax());
         setPermission(adminCommandManager.getPermissionPrefix() + getName().toLowerCase());
@@ -26,14 +26,14 @@ public class AdminListCommand extends SubCommand {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        if (sender instanceof Player) {
-            guiManager.openVoucherListInventory((Player) sender);
+        if (sender instanceof Player player) {
+            inventoryManager.openFileSystemMenu(player);
         }
     }
 
     @Override
     public List<String> getSubcommandArguments(CommandSender sender, String[] args) {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
 }

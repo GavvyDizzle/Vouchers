@@ -13,13 +13,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class AdminGiveVoucherCommand extends SubCommand {
+public class GiveVoucherCommand extends SubCommand {
 
     private final VoucherManager voucherManager;
 
-    public AdminGiveVoucherCommand(AdminCommandManager adminCommandManager, VoucherManager voucherManager) {
+    public GiveVoucherCommand(AdminCommandManager adminCommandManager, VoucherManager voucherManager) {
         this.voucherManager = voucherManager;
 
         setName("give");
@@ -83,7 +84,7 @@ public class AdminGiveVoucherCommand extends SubCommand {
             StringUtil.copyPartialMatches(args[2], voucherManager.getVoucherIDs(), list);
             return list;
         }
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
 }

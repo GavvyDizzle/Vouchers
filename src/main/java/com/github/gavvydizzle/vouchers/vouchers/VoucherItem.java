@@ -1,68 +1,47 @@
 package com.github.gavvydizzle.vouchers.vouchers;
 
-import com.github.gavvydizzle.vouchers.Vouchers;
 import com.github.mittenmc.serverutils.Colors;
-import com.github.mittenmc.serverutils.ConfigUtils;
+import com.github.mittenmc.serverutils.gui.pages.ItemGenerator;
+import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-public class VoucherItem implements Comparable<VoucherItem> {
+public class VoucherItem implements Comparable<VoucherItem>, ItemGenerator {
 
-    private final String id, itemName, permission, onClaimMessage;
-    private final ItemStack item, itemListItem;
+    @Getter
+    private final String id, itemName, permission;
+    private final String onClaimMessage;
     private final List<String> extraCommands;
+    private final ItemStack item, itemListItem;
 
-    public VoucherItem(@NotNull String id,
-                       @Nullable String permission,
-                       @Nullable String displayName,
-                       @Nullable String material,
-                       @NotNull List<String> lore,
-                       @NotNull List<String> extraCommands,
-                       @Nullable String onClaimMessage,
-                       boolean isEnchanted,
-                       int customModelID) {
-
+    public VoucherItem(@NotNull String id, @NotNull String permission, @NotNull String onClaimMessage, @NotNull List<String> extraCommands, @NotNull ItemStack itemStack) {
         this.id = id;
         this.permission = permission;
+        this.onClaimMessage = onClaimMessage;
         this.extraCommands = extraCommands;
-        this.onClaimMessage = Colors.conv(onClaimMessage == null ? "" : onClaimMessage.trim());
 
-        item = new ItemStack(ConfigUtils.getMaterial(material, Material.NAME_TAG));
+        this.item = itemStack;
         ItemMeta meta = item.getItemMeta();
         assert meta != null;
 
-        if (isEnchanted) {
-            meta.addEnchant(Enchantment.OXYGEN, 1, false);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        }
-
-        itemName = Colors.conv(displayName);
-        meta.setDisplayName(itemName);
-        meta.setLore(Colors.conv(lore));
-        meta.getPersistentDataContainer().set(Vouchers.getInstance().getVoucherManager().getVoucherKey(), PersistentDataType.STRING, id);
-        if (customModelID > 0) meta.setCustomModelData(customModelID);
-        item.setItemMeta(meta);
+        this.itemName = meta.getDisplayName();
+        int customModelID = meta.hasCustomModelData() ? meta.getCustomModelData() : -1;
 
         itemListItem = item.clone();
         meta = itemListItem.getItemMeta();
         assert meta != null;
-        ArrayList<String> itemListLore = new ArrayList<>(Objects.requireNonNull(meta.getLore()));
-        itemListLore.add(ChatColor.DARK_GRAY + "----------------------");
-        itemListLore.add(ChatColor.YELLOW + "id: " + ChatColor.GREEN + id);
-        if (customModelID > 0) itemListLore.add(ChatColor.YELLOW + "custom_model_data: " + ChatColor.GREEN + customModelID);
+        List<String> itemListLore = meta.getLore();
+        assert itemListLore != null;
+        itemListLore.add(Colors.conv("&8----------------------"));
+        itemListLore.add(Colors.conv("&6id: &e" + id));
+        itemListLore.add(Colors.conv("&6Permission: &e" + permission));
+        if (customModelID > 0) itemListLore.add(Colors.conv("&6custom_model_data: &e" + customModelID));
         meta.setLore(itemListLore);
         itemListItem.setItemMeta(meta);
     }
@@ -73,7 +52,7 @@ public class VoucherItem implements Comparable<VoucherItem> {
      */
     public void claim(Player player) {
         for (String cmd : extraCommands) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("{player}", Objects.requireNonNull(player.getName())));
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("{player}", player.getName()));
         }
 
         if (!onClaimMessage.isEmpty()) {
@@ -85,25 +64,18 @@ public class VoucherItem implements Comparable<VoucherItem> {
         return player.hasPermission(permission);
     }
 
-
-    public String getId() {
-        return id;
+    @Override
+    public @NotNull ItemStack getMenuItem(Player player) {
+        return itemListItem;
     }
 
-    public String getItemName() {
-        return itemName;
-    }
-
-    public String getPermission() {
-        return permission;
+    @Override
+    public @Nullable ItemStack getPlayerItem(Player player) {
+        return getItem();
     }
 
     public ItemStack getItem() {
         return item.clone();
-    }
-
-    public ItemStack getItemListItem() {
-        return itemListItem;
     }
 
     @Override
